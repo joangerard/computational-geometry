@@ -1,0 +1,95 @@
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.2/p5.js"></script>
+    <script language="javascript" type="text/javascript">
+    
+    class Point {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+        }
+    }
+        
+    var points = [];
+    
+    function setup() {
+        createCanvas(640, 480);
+        fill('black');
+    }
+    
+    function draw() {
+        background(200);
+        drawPoints();
+        drawLine();
+
+        if (points.length > 2) {
+          determinant = orientationDeterminant();
+          showCorrespondingMessage(determinant);
+        }
+        
+    }
+    
+    function mousePressed() {
+        points.push(new Point(mouseX,mouseY));
+    }
+
+    function showCorrespondingMessage(determinant) {
+      let result = "";
+      if (determinant > 0) {
+        result = "Right-turn orientation";
+      } else if (determinant < 0) {
+        result = "Left-turn orientation";
+      } else if (determinant == 0) {
+        result = "Under the same line";
+      }
+      document.getElementById('label-result').textContent = result;
+    }
+    
+    function drawPoints() {
+      for (i in points) {
+        ellipse(points[i].x, points[i].y, 4, 4);
+      }
+    }
+
+    function drawLine() {
+      // Draw a line for the first two drawn points
+      if (points.length >= 2) {
+        line(points[0].x, points[0].y, points[1].x, points[1].y);
+      }
+    }
+
+    function getDeterminant(p1, p2, p3) {
+      return (p2.x - p1.x) * (p3.y - p2.y) - 
+              (p2.y - p1.y) * (p3.x - p2.x);
+    }
+
+    function orientationDeterminant() {
+      // Determine the orientation determinant of the last point regarding
+      // the two first points line projection.
+        return getDeterminant(points[0], points[1], points[points.length - 1]);
+    }
+
+    function resetBoard() {
+      clear();
+      points = [];
+      document.getElementById('label-result').textContent = '';
+    }
+    
+    </script>
+    <style> body {padding: 0; margin: 0;} </style>
+    </head>
+    
+    <body>
+    <h1> Orientation Determinant</h1>
+    <p>
+      <h2>Last point: 
+        <label id="label-result"></label>
+      </h2>
+    </p>
+    <a href="index.html">Go to Menu</a><br/>
+    <button onclick="resetBoard()">Reset</button>
+    <br/>
+    <br/>
+  </body>
+</html>

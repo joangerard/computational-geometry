@@ -1,0 +1,190 @@
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.2/p5.js"></script>
+    <script language="javascript" type="text/javascript">
+    
+    class Point {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+        }
+    }
+        
+    var points = [];
+    var drawLines = false;
+    
+    function setup() {
+        createCanvas(640, 480);
+        fill('black');
+    }
+    
+    function draw() {
+        background(200);
+        drawPoints();
+        if (drawLines) {
+          connect();
+        }
+    }
+    
+    function mousePressed() {
+      // avoid to keep drawing points when the Convex Hull has been
+      // already calculated.
+      if (drawLines) {
+        resetBoard();
+        drawLines = false;
+      } else {
+        points.push(new Point(mouseX,mouseY));
+      }
+    }
+
+    function showCorrespondingMessage(positive) {
+      if (positive) {
+        result = "Inside";
+      } else {
+        result = "Outside";
+      }
+      document.getElementById('label-result').textContent = result;
+    }
+    
+    function drawPoints() {
+      for (i in points) {
+        ellipse(points[i].x, points[i].y, 4, 4);
+      }
+    }
+
+    function drawTriangle() {
+      // Draw a line for the first two drawn points
+      if (points.length >= 3) {
+        line(points[0].x, points[0].y, points[1].x, points[1].y);
+        line(points[1].x, points[1].y, points[2].x, points[2].y);
+        line(points[2].x, points[2].y, points[0].x, points[0].y);
+      }
+    }
+
+    function getDeterminant(p1, p2, p3) {
+      return (p2.x - p1.x) * (p3.y - p2.y) - 
+              (p2.y - p1.y) * (p3.x - p2.x);
+    }
+
+    function pointInTriangle(p1, p2, p3, p4) {
+      let d1 = getDeterminant(p1, p2, p4);
+      let d2 = getDeterminant(p2, p3, p4);
+      let d3 = getDeterminant(p3, p1, p4);
+
+      nega = (d1 < 0) || (d2 < 0) || (d3 < 0);
+      posi = (d1 > 0) || (d2 > 0) || (d3 > 0);
+
+      return !(nega && posi);
+    }
+
+    function resetBoard() {
+      clear();
+      points = [];
+      document.getElementById('label-result').textContent = '';
+      drawLines = false;
+    }
+
+    function executeConvexHull() {
+      // delete last button click point
+      points.splice(points.length - 1, 1);
+      pointsDeleted = []
+      
+      // put a state to a point: true if it was deleted.
+      for (let i = 0; i < points.length; i++) pointsDeleted.push(false);
+
+      if (points.length > 3) {
+
+        for (let i = 0; i < points.length; i++) {
+
+          for (let j = i + 1; j < points.length; j++) {
+
+            for (let k = j + 1; k < points.length; k++) {
+
+              for (let l = 0; l < points.length; l++) {
+
+                // if we are talking about 4 different points and there were not deleted yet.
+                if (!pointsDeleted[i] && !pointsDeleted[j] && !pointsDeleted[k] && !pointsDeleted[l]
+                  && i != l && j != l && k != l) {
+                  if (pointInTriangle(points[i], points[j], points[k], points[l])) {
+                    // delete point l
+                    pointsDeleted[l] = true;
+                  }
+                }
+              }
+            }
+          }
+        }
+        
+        // offitially delete all points
+        let newPoints = []
+        for (let i = 0; i < points.length; i ++) {
+          if (!pointsDeleted[i]) {
+            newPoints.push(points[i]);
+          }
+        }
+        points = newPoints;
+
+        // connect succesive points
+        drawLines = true;
+      }
+    }
+
+    function connect() {
+      // sort by x
+      let center = new Point(1/points.length * points.reduce((acc, p1) => acc + p1.x, 0), 
+                                  1/points.length * points.reduce((acc, p1) => acc + p1.y, 0));
+
+      points.sort(function(p1, p2) {
+        // the following code is based on a Stackoverflow answer
+        // here: https://stackoverflow.com/questions/6989100/sort-points-in-clockwise-order
+
+        // if p1 is on the top and p2 in bottom regarding the central point then p1 > p2
+        if (p1.x - center.x >= 0 && p2.x - center.x < 0)
+            return true;
+        if (p1.x - center.x < 0 && p2.x - center.x >= 0)
+            return false;
+        // if p1 and p2 are exactly at the center in x
+        if (p1.x - center.x == 0 && p2.x - center.x == 0) {
+            if (p1.y - center.y >= 0 || p2.y - center.y >= 0)
+                return p1.y > p2.y;
+            return p2.y > p1.y;
+        }
+
+        // get the determinant center -> p1 -> p2
+        let detResult = getDeterminant(center, p1, p2);
+
+        if (detResult < 0)
+            return true;
+        if (detResult > 0)
+            return false;
+      });
+
+      // draw lines
+      for (let i = 0; i < points.length - 1; i++) {
+        line(points[i].x, points[i].y,
+        points[i + 1].x, points[i + 1].y);
+      }
+
+      // draw last line to complete poligon
+      line(points[points.length - 1].x, points[points.length - 1].y, points[0].x, points[0].y);
+    }
+    
+    </script>
+    <style> body {padding: 0; margin: 0;} </style>
+    </head>
+    
+    <body>
+    <h1>Test if a point is inside a triangle given by 3 points</h1>
+    <p>
+      <h2>Result: 
+        <label id="label-result"></label>
+      </h2>
+    </p>
+    <a href="index.html">Go to Menu</a><br/>
+    <button onclick="resetBoard()">Reset</button>
+    <button onclick="executeConvexHull()">Convex Hull</button>
+    <br/>
+    <br/>
+  </body>
+</html>
