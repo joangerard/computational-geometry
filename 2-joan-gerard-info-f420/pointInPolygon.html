@@ -1,0 +1,193 @@
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.2/p5.js"></script>
+    <script language="javascript" type="text/javascript">
+    
+    class Point {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+        }
+    }
+        
+    var points = [];
+    var convexHullPoints = [];
+    var shouldConnectPoints = false;
+    
+    function setup() {
+        createCanvas(640, 480);
+        fill('black');
+    }
+    
+    function draw() {
+        background(200);
+        drawPoints();
+        if (shouldConnectPoints) {
+          connect(convexHullPoints);
+        }
+    }
+    
+    function mousePressed() {
+      points.push(new Point(mouseX,mouseY));
+      if (shouldConnectPoints) {
+        if (insidePolygon()) {
+          document.getElementById('result-lbl').textContent = "Inside";
+        } else {
+          document.getElementById('result-lbl').textContent = "Outside";
+        }
+      }
+    }
+
+    function insidePolygon() {
+      let pSearch = points[points.length - 1], nearestPointA, nearestPointB;
+
+      if (getDeterminant(convexHullPoints[0], convexHullPoints[1], pSearch) > 0) {
+        return false;
+      }
+      
+      if (getDeterminant(convexHullPoints[0], convexHullPoints[convexHullPoints.length - 1], pSearch) < 0) {
+        return false;
+      }
+
+      nearestPointA = binarySearch(convexHullPoints, pSearch, biggerThan, lessThan);
+      console.log(nearestPointA);
+
+      // select superior/inferior point
+      if (getDeterminant(convexHullPoints[0], convexHullPoints[nearestPointA], pSearch) > 0) {
+        nearestPointB = nearestPointA - 1;
+        return getDeterminant(convexHullPoints[nearestPointA], convexHullPoints[nearestPointB], pSearch) > 0;
+      }
+
+      nearestPointB = nearestPointA + 1;
+      return getDeterminant(convexHullPoints[nearestPointA], convexHullPoints[nearestPointB], pSearch) < 0;
+    }
+
+    function lessThan(p1, p2, p3) {
+      return getDeterminant(p1, p2, p3) < 0;
+    }
+
+    function biggerThan(p1, p2, p3) {
+      return getDeterminant(p1, p2, p3) > 0;
+    }
+
+    function binarySearch(values, searchedElem, biggerThan, lessThan) {
+      let left = 0;
+      let right = values.length - 1;
+      
+      while (left < right) {
+        let middle = Math.floor((left + right) / 2);
+
+        // when the point is
+        if (middle === 0) {
+          return 1;
+        }
+        if (lessThan(values[0], values[middle], searchedElem)) {
+          left = middle + 1;
+        } else if (biggerThan(values[0], values[middle], searchedElem)) {
+          right = middle - 1;
+        } else {
+          // special case
+          return middle;
+        }
+      }
+
+      return left;
+    }
+    
+    function drawPoints() {
+      for (i in points) {
+        ellipse(points[i].x, points[i].y, 4, 4);
+      }
+    }
+
+    function getDeterminant(p1, p2, p3) {
+      return (p2.x - p1.x) * (p3.y - p2.y) - 
+              (p2.y - p1.y) * (p3.x - p2.x);
+    }
+
+    function resetBoard() {
+      clear();
+      points = [];
+      convexHullPoints = [];
+      shouldConnectPoints = false;
+      // enable button convex hull
+      document.getElementById("get-convex-hull-btn").disabled = false;
+      document.getElementById("result-lbl").textContent = "";
+    }
+
+    function executeConvexHull() {
+      // disable button convex hull
+      document.getElementById("get-convex-hull-btn").disabled = true;
+
+      // delete last button click point
+      points.splice(points.length - 1, 1);
+
+      // sort point by x coordinate
+      points.sort((p1, p2) => p1.x > p2.x);
+      
+      // create two stacks: one for the upper points and the other for the lower points.
+      let upPoints = [points[0], points[1]];
+      let lowPoints = [points[0], points[1]];
+
+      for (let i = 2; i < points.length; i++) {
+
+        // If it is a right turn and the number of upper points are
+        // more than 1 then pop
+        while(upPoints.length > 1 && getDeterminant(
+                upPoints[upPoints.length - 2],
+                upPoints[upPoints.length - 1],
+                points[i]
+              ) < 0) {
+          upPoints.pop();
+        }
+        upPoints.push(points[i]);
+        
+        // If it is a left turn and the number of lower points are
+        // more than 1 then pop
+        while(lowPoints.length > 1 && getDeterminant(
+                lowPoints[lowPoints.length - 2],
+                lowPoints[lowPoints.length - 1],
+                points[i]
+            ) > 0) {
+          lowPoints.pop();
+        }
+        lowPoints.push(points[i]);
+      }
+      
+      // delete duplicate points and order them anti-clockwise
+      lowPoints.splice(lowPoints.length - 1, 1);
+      upPoints = upPoints.reverse();
+      upPoints.splice(upPoints.length - 1, 1);
+      
+      // create convex hull points list and connect them
+      convexHullPoints = [...lowPoints, ...upPoints];
+      shouldConnectPoints = true;
+    }
+
+    function connect(points) {
+      // draw lines
+      for (let i = 0; i < points.length - 1; i++) {
+        line(points[i].x, points[i].y,
+        points[i + 1].x, points[i + 1].y);
+      }
+
+      // connect last point with first one
+      line(points[points.length - 1].x, points[points.length - 1].y,
+        points[0].x, points[0].y);
+    }
+    
+    </script>
+    <style> body {padding: 0; margin: 0;} </style>
+    </head>
+    
+    <body>
+    <h1>Checks if a point q is inside a convex polygon P</h1>
+    <h2>Result: <label id="result-lbl"></label></h2>
+    <a href="index.html">Go to Menu</a><br/>
+    <button onclick="resetBoard()">Reset</button>
+    <button onclick="executeConvexHull()" id="get-convex-hull-btn">Get Convex Hull</button>
+    <br/>
+    <br/>
+  </body>
+</html>
