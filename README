@@ -1,3 +1,4 @@
 Computational Geometry Algorithms
 
 1. Convex Hull
+2. Convex Hull (n logn) + Point inside/outside polygon
