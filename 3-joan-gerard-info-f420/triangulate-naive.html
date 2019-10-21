@@ -1,0 +1,221 @@
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.2/p5.js"></script>
+    <script language="javascript" type="text/javascript">
+    
+    class Point {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+        }
+    }
+        
+    var points = [];
+    var width = 640, height = 480;
+    var shouldClosePolygon = false;
+    var shouldTriangulate = false;
+    var triangles = [];
+    
+    function setup() {
+        createCanvas(640, 480);
+        fill('black');
+    }
+    
+    function draw() {
+        background(200);
+        drawPoints();
+		    drawLinesBtwnPoints();
+        if (shouldTriangulate) {
+          drawInteriorTriangles(triangles);
+        }
+    }
+    
+    function mousePressed() {
+      if (mouseX <= width && mouseX >= 0 && mouseY <= height && mouseY >= 0 && !shouldClosePolygon) {
+        points.push(new Point(mouseX,mouseY));
+      }
+    }
+    
+    function drawPoints() {
+      for (let i in points) {
+        ellipse(points[i].x, points[i].y, 4, 4);
+      }
+    }
+	
+	  function drawLinesBtwnPoints() {
+      if (points.length > 0) {
+        for (let i = 0; i < points.length - 1; i++) {
+          line(points[i].x, points[i].y, points[i+1].x, points[i+1].y);
+        }
+      }
+    
+      // close polygon
+      if (shouldClosePolygon && points.length > 2) {
+        line(points[points.length - 1].x, points[points.length - 1].y, points[0].x, points[0].y);
+      }
+    }
+
+    function drawInteriorTriangles(triangles){
+      for(let i = 0; i< triangles.length - 1; i = i + 2) {
+        line(triangles[i].x, triangles[i].y, triangles[i + 1].x, triangles[i + 1].y);
+      }
+    }
+
+    function isAnEar(p1, p2, p3, polygon) {
+      let earFound = true;
+
+      // right turn
+      if (getDeterminant(p1, p2, p3) < 0) {
+        // verify that there is no other point inside triangle
+        for (let j = 0; j < polygon.length; j++) {
+          if (polygon[j] != p1 && 
+              polygon[j] != p2 &&
+              polygon[j] != p3) {
+            if (pointInTriangle(p1, p2, p3, polygon[j])) {
+              earFound = false;
+            }
+          }
+        }
+      } else {
+        earFound = false;
+      }
+
+      return earFound;
+    }
+
+    function findEar(polygon) {
+      let p1, p2, p3;
+
+      for (let i = 1; i < polygon.length - 1; i++) {
+        p1 = polygon[i - 1];
+        p2 = polygon[i];
+        p3 = polygon[i + 1];
+
+        if (isAnEar(p1, p2, p3, polygon)) {
+          return i;
+        }
+      }
+
+      return 0;
+    }
+
+    function triangulatePoly(polygon, lines) {
+      // base case: triangle
+      if (polygon.length === 3) {
+        lines.push(polygon[0]);
+        lines.push(polygon[2]);
+        return lines;
+      }
+      
+      // else find an ear an delete that vertex from the polygon
+      let vertex = findEar(polygon);
+
+      // last vertex
+      if (vertex === polygon.length - 1){
+        lines.push(polygon[0]);
+        lines.push(polygon[vertex - 1]);
+      }
+      // first vertex 
+      else if (vertex === 0) {
+        lines.push(polygon[polygon.length - 1]);
+        lines.push(polygon[vertex + 1]);
+      } 
+      // vertex in the middle
+      else {
+        lines.push(polygon[vertex - 1]);
+        lines.push(polygon[vertex + 1]);
+      }
+      
+      // delete ear vertex
+      polygon.splice(vertex, 1);
+
+      return triangulatePoly(polygon, lines);
+    }
+
+    function closePolygon() {
+      shouldClosePolygon = true;
+
+      document.getElementById('close-polygon-btn').disabled = true;
+    }
+
+    function getDeterminant(p1, p2, p3) {
+      return (p2.x - p1.x) * (p3.y - p2.y) - 
+              (p2.y - p1.y) * (p3.x - p2.x);
+    }
+
+    function pointInTriangle(p1, p2, p3, p4) {
+      let d1 = getDeterminant(p1, p2, p4);
+      let d2 = getDeterminant(p2, p3, p4);
+      let d3 = getDeterminant(p3, p1, p4);
+
+      nega = (d1 < 0) || (d2 < 0) || (d3 < 0);
+      posi = (d1 > 0) || (d2 > 0) || (d3 > 0);
+
+      return !(nega && posi);
+    }
+
+    function resetBoard() {
+      clear();
+      points = [];
+      shouldClosePolygon = false;
+      shouldTriangulate = false;
+      triangles = [];
+
+      document.getElementById('triangulate-btn').disabled = false;
+      document.getElementById('close-polygon-btn').disabled = false;
+    }
+
+    function copyPoints(fromPoints, toPoints) {
+      for (i in fromPoints) {
+        toPoints.push(new Point(fromPoints[i].x, fromPoints[i].y));
+      }
+      return toPoints;
+    }
+
+    function clockwiseOrder(points) {
+      let area = 0;
+      for (let i = 0; i < points.length - 1; i++) {
+        area += (points[i + 1].x - points[i].x) * (points[i + 1].y + points[i].y);
+      }
+
+      area += (points[0].x - points[points.length - 1].x) * (points[points.length - 1].y + points[0].y);
+
+      if (area < 0){
+        return true;
+      }
+      return false;
+    }
+
+    function triangulatePolyExec(){
+      document.getElementById('triangulate-btn').disabled = true;
+
+      // verify if polygon is clockwise or anticlockwise
+      if (clockwiseOrder(points)) {
+        // put them anticlockwise
+        points.reverse();
+      }
+
+      // copy points
+      let pointsCopy = copyPoints(points, []);
+      triangles = triangulatePoly(pointsCopy, []);
+      shouldTriangulate = true;
+    }
+    
+    </script>
+    <style> body {padding: 0; margin: 0;} </style>
+    </head>
+    
+    <body>
+    <h1>Given a polygon finds an ear, and then triangulate the polygon recursively.</h1>
+    <p>Draw a polygon and close it with the Close Button. It will draw an edge connecting the last drawn point
+    and the first. </p>
+    <p>Once the polygon is there press the Triangulate Polygon Button for triangulate it.</p>
+    <a href="index.html">Go to Menu</a><br/>
+    <button onclick="resetBoard()">Reset</button>
+    <button onclick="closePolygon()" id="close-polygon-btn">Close Polygon</button>
+    <button onclick="triangulatePolyExec()" id="triangulate-btn">Triangulate Polygon</button>
+    <br/>
+    <br/>
+  </body>
+</html>
