@@ -39,12 +39,17 @@ class Canvas{
 
     createEdge() {
         if (this.selectedPoints.length === 2) {
-            // draw an edge
-            const i = 0;
-            line(this.selectedPoints[i].x, this.selectedPoints[i].y, this.selectedPoints[i+1].x, this.selectedPoints[i+1].y);
+            // add edge to dcel structure and update it
+            this.dcel.addEdge(this.selectedPoints[0], this.selectedPoints[1]);
 
-            // reset selected points list
-            this.selectedPoints = [];
+            // get the points color back to black.
+            setTimeout(() => {
+                this.selectedPoints[0].color = [0,0,0];
+                this.selectedPoints[1].color = [0,0,0];
+
+                // reset selected points list
+                this.selectedPoints = [];
+            }, 1000);
         }
     }
 

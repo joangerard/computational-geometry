@@ -35,11 +35,13 @@ class Dcel {
         for (let i = 0; i < this.edges.length; i++) {
             // first edge
             if (i === 0) {
-                this.edges[i].next = this.edges[i+1]
+                this.edges[i].previous = this.edges[this.edges.length-1];
+                this.edges[i].next = this.edges[i+1];
             } 
             // last edge
             else if(i === this.edges.length - 1) {
                 this.edges[i].previous = this.edges[i-1];
+                this.edges[i].next = this.edges[0];
             }
             // other edge
             else {
@@ -47,6 +49,82 @@ class Dcel {
                 this.edges[i].previous = this.edges[i-1];
             }
         }
+    }
+
+    addEdge(vertexA, vertexB) {
+        let aux, next;
+        // create new edge
+        let newEdge = new Edge(vertexA, vertexB);
+        newEdge.twin = new Edge(vertexB, vertexA);
+
+        //create new face
+        this.numberOfFaces++;
+        let newFace = new Face(this.numberOfFaces);
+        this.faces.push(newFace);
+
+        // get the edge that goes through vertexA and vertexB
+        let sourceEdge = this.searchEdge(vertexA, this.checkVertexBEquals);
+        let targetEdge = this.searchEdge(vertexB, this.checkVertexBEquals);
+
+        // FIRST FACE:
+        // update links
+        newEdge.next = targetEdge.next;
+        newEdge.previous = sourceEdge;
+        // save it before losing it.
+        aux = sourceEdge.next;
+        sourceEdge.next = newEdge;
+        targetEdge.next.previous = newEdge;
+        
+        // update origin
+        newEdge.origin = newEdge.vertexA;
+        next = newEdge.next;
+        while (next !== newEdge) {
+            next.origin = newEdge.origin;
+            next = next.next;
+        }
+
+        // SECOND FACE:
+        //update links
+        newEdge.twin.next = aux;
+        newEdge.twin.previous = targetEdge;
+        aux.previous = newEdge.twin
+        targetEdge.next = newEdge.twin;
+
+        // update origin
+        newEdge.twin.origin = newEdge.twin.vertexA;
+        next = newEdge.twin.next;
+        while(next !== newEdge.twin) {
+            next.origin = newEdge.twin.origin;
+            next = next.next;
+        }
+
+        // update only half of the edges faces, the rest does not change.
+        newEdge.face = newFace;
+        next = newEdge.next;
+
+        while(next !== newEdge) {
+            next.face = newFace;
+            next = next.next;
+        }
+
+        // update the twin's face aswell
+        newEdge.twin.face = newEdge.twin.next.face;
+
+        this.edges.push(newEdge);
+    }
+
+
+    checkVertexBEquals(vertex) {
+        return function (edge) {
+            return edge.vertexB === vertex;
+        }
+    }
+
+
+    searchEdge(vertex, checkVertex) {
+        let edgeFound = null;
+
+        return this.edges.filter(checkVertex(vertex))[0];
     }
 
     createEdgeFromTo(i, j, face1, face2, vertexOrigin) {
