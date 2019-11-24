@@ -9,7 +9,9 @@ let orchestrator = new Orchestrator(canvas);
 
 
 function reset(){
-    canvas.resetBoard();
+    points = shaper.getSquarePoints(30);
+    dcel = new Dcel(points);
+    canvas.resetBoard(dcel);
 }
 
 function setup() {

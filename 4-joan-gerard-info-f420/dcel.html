@@ -12,13 +12,33 @@
     <script src="js/dcel-scructure/edge.js"></script>
     <script src="js/dcel-scructure/face.js"></script>
     <script src="js/dcel-scructure/point.js"></script>
-
+    <link rel="stylesheet" href="css/style.css">
     <script src="js/main.js"></script>
   </head>
     
   <body>
+    <h2>HW4: DCEL Data Structure Implementation</h2>
+    <div>
+      <ul>
+        <li>Click on an edge will add a vertex.</li>
+        <li>To select a vertex just click on it. Red means it is selected. Black means it is not 
+            selected. To unselect a vertex click on it again (it should turn to black again).
+        </li>
+        <li>Click on two vertices will add an edge between both vertices.</li>
+
+        <li>Notice that the operation of clicking on a vertex and then on an edge (and viceversa) is not supported.</li>
+        <li>Source code is found in <a href="https://github.com/joangerard/computational-geometry">this repo</a>.</li>
+      </ul>
+    </div>
     <a href="index.html">Go to Menu</a>
     <br/>
     <button onclick="reset()">Reset</button>
+    <div id="sketch-holder">
+        
+    </div>
+    <h1>Faces Information</h1>
+    <div id="faces-list">
+
+    </div> 
   </body>
 </html>
