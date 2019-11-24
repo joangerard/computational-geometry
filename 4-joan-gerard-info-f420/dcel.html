@@ -3,17 +3,16 @@
     <meta charset="UTF-8">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.2/p5.js"></script>
 
-    <script src="js/shaper.js"></script>
-    <script src="js/configuration.js"></script>
-    <script src="js/canvas.js"></script>
-    <script src="js/orchestrator.js"></script>
+    <script src="shaper.js"></script>
+    <script src="configuration.js"></script>
+    <script src="canvas.js"></script>
+    <script src="orchestrator.js"></script>
 
-    <script src="js/dcel-scructure/dcel.js"></script>
-    <script src="js/dcel-scructure/edge.js"></script>
-    <script src="js/dcel-scructure/face.js"></script>
-    <script src="js/dcel-scructure/point.js"></script>
-    <link rel="stylesheet" href="css/style.css">
-    <script src="js/main.js"></script>
+    <script src="dcel.js"></script>
+    <script src="edge.js"></script>
+    <script src="face.js"></script>
+    <script src="point.js"></script>
+    <script src="main.js"></script>
   </head>
     
   <body>
@@ -26,11 +25,10 @@
         </li>
         <li>Click on two vertices will add an edge between both vertices.</li>
 
-        <li>Notice that the operation of clicking on a vertex and then on an edge (and viceversa) is not supported.</li>
+        <li>Notice that the operation of adding an edge directly by clicking on a vertex and then on an edge (and viceversa) is not supported.</li>
         <li>Source code is found in <a href="https://github.com/joangerard/computational-geometry">this repo</a>.</li>
       </ul>
     </div>
-    <a href="index.html">Go to Menu</a>
     <br/>
     <button onclick="reset()">Reset</button>
     <div id="sketch-holder">
